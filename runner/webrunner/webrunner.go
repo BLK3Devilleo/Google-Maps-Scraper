@@ -245,11 +245,14 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 		cancel()
 	}
 
+	job.Status = web.StatusOK
+	if err := w.svc.Update(ctx, job); err != nil {
+		log.Printf("failed to update job status to OK: %v", err)
+	}
+
 	mate.Close()
 
-	job.Status = web.StatusOK
-
-	return w.svc.Update(ctx, job)
+	return nil
 }
 
 func (w *webrunner) setupMate(_ context.Context, writer io.Writer, job *web.Job) (*scrapemateapp.ScrapemateApp, error) {
