@@ -1,0 +1,12 @@
+services:
+  scraper:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - gmapsdata:/gmapsdata
+    command: -web -data-folder /gmapsdata
+    restart: always
+
+volumes:
+  gmapsdata:
