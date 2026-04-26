@@ -137,6 +137,9 @@ func rowToJob(row scannable) (web.Job, error) {
 		return web.Job{}, err
 	}
 
+	ans.DateUnix = ans.Date.Unix()
+	ans.MaxTimeSeconds = int(ans.Data.MaxTime.Seconds())
+
 	return ans, nil
 }
 

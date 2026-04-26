@@ -130,10 +130,18 @@ func (w *webrunner) work(ctx context.Context) error {
 	}
 }
 
-func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
-	job.Status = web.StatusWorking
+func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("CRITICAL PANIC in job %s: %v", job.ID, r)
+			job.Status = web.StatusFailed
+			_ = w.svc.Update(context.Background(), job)
+		}
+	}()
 
-	err := w.svc.Update(ctx, job)
+	log.Printf("starting job %s: %s", job.ID, job.Name)
+	job.Status = web.StatusWorking
+	err = w.svc.Update(ctx, job)
 	if err != nil {
 		return err
 	}
