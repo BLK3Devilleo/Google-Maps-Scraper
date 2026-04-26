@@ -132,7 +132,75 @@
             </div>
         </main>
     </div>
+
+    <!-- Modal para el Visor de Leads -->
+    <div id="results-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">Resultados de Extracción</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <table class="results-table">
+                    <thead id="results-thead"></thead>
+                    <tbody id="results-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function viewResults(id, name) {
+            document.getElementById('modal-title').innerText = `Leads: ${name}`;
+            const tbody = document.getElementById('results-tbody');
+            const thead = document.getElementById('results-thead');
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">Cargando leads...</td></tr>';
+            thead.innerHTML = '';
+
+            document.getElementById('results-modal').style.display = 'flex';
+
+            fetch(`/jobs/results?id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">No hay resultados todavía.</td></tr>';
+                        return;
+                    }
+
+                    // Headers
+                    const headers = Object.keys(data[0]);
+                    let headHtml = '<tr>';
+                    const mainHeaders = ['title', 'category', 'address', 'website', 'phone', 'emails'];
+                    headers.forEach(h => {
+                        if (mainHeaders.includes(h.toLowerCase()) || mainHeaders.includes(h)) {
+                            headHtml += `<th>${h.toUpperCase()}</th>`;
+                        }
+                    });
+                    headHtml += '</tr>';
+                    thead.innerHTML = headHtml;
+
+                    // Rows
+                    let bodyHtml = '';
+                    data.forEach(row => {
+                        bodyHtml += '<tr>';
+                        headers.forEach(h => {
+                            if (mainHeaders.includes(h.toLowerCase()) || mainHeaders.includes(h)) {
+                                bodyHtml += `<td>${row[h] || '-'}</td>`;
+                            }
+                        });
+                        bodyHtml += '</tr>';
+                    });
+                    tbody.innerHTML = bodyHtml;
+                })
+                .catch(err => {
+                    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 40px; color: var(--color-error);">Error al cargar los datos: ${err}</td></tr>`;
+                });
+        }
+
+        function closeModal() {
+            document.getElementById('results-modal').style.display = 'none';
+        }
+
         function updateTimers() {
             const now = Math.floor(Date.now() / 1000);
             document.querySelectorAll('.countdown').forEach(el => {

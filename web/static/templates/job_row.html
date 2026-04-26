@@ -23,6 +23,8 @@
         </span>
     </td>
     <td class="actions-cell">
+        <button onclick="viewResults('{{.ID}}', '{{.Name}}')" class="btn-action view-button">🔍 Ver Leads</button>
+
         {{ if eq .Status "working" }}
         <button hx-post="/stop?id={{.ID}}"
             hx-confirm="¿Deseas detener la extracción ahora? Se guardarán los resultados obtenidos."

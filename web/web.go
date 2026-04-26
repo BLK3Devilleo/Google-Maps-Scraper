@@ -67,6 +67,11 @@ func New(svc *Service, addr string) (*Server, error) {
 
 		ans.stop(w, r)
 	})
+	mux.HandleFunc("/jobs/results", func(w http.ResponseWriter, r *http.Request) {
+		r = requestWithID(r)
+
+		ans.getResults(w, r)
+	})
 	mux.HandleFunc("/jobs", ans.getJobs)
 	mux.HandleFunc("/", ans.index)
 
@@ -477,6 +482,30 @@ func (s *Server) stop(w http.ResponseWriter, r *http.Request) {
 	s.svc.Stop(stopID.String())
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) getResults(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+
+		return
+	}
+
+	jobID, ok := getIDFromRequest(r)
+	if !ok {
+		http.Error(w, "Invalid ID", http.StatusUnprocessableEntity)
+
+		return
+	}
+
+	results, err := s.svc.GetResults(jobID.String())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	renderJSON(w, http.StatusOK, results)
 }
 
 type apiError struct {

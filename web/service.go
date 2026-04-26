@@ -2,7 +2,9 @@ package web
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -95,7 +97,50 @@ func (s *Service) GetCSV(_ context.Context, id string) (string, error) {
 
 	if _, err := os.Stat(datapath); os.IsNotExist(err) {
 		return "", fmt.Errorf("csv file not found for job %s", id)
+	return datapath, nil
+}
+
+func (s *Service) GetResults(id string) ([]map[string]string, error) {
+	datapath, err := s.GetCSV(context.Background(), id)
+	if err != nil {
+		return nil, err
 	}
 
-	return datapath, nil
+	file, err := os.Open(datapath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	headers, err := reader.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	var results []map[string]string
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		row := make(map[string]string)
+		for i, value := range record {
+			if i < len(headers) {
+				row[headers[i]] = value
+			}
+		}
+		results = append(results, row)
+		
+		// Limit to prevent crashing the browser with huge files
+		if len(results) >= 500 {
+			break
+		}
+	}
+
+	return results, nil
 }
