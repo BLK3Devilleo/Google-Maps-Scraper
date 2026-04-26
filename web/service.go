@@ -97,6 +97,8 @@ func (s *Service) GetCSV(_ context.Context, id string) (string, error) {
 
 	if _, err := os.Stat(datapath); os.IsNotExist(err) {
 		return "", fmt.Errorf("csv file not found for job %s", id)
+	}
+
 	return datapath, nil
 }
 
