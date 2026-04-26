@@ -1,7 +1,12 @@
 <tr>
     <td style="font-family: monospace; font-size: 12px; color: var(--color-text-dim);">{{.ID}}</td>
     <td style="font-weight: 600;">{{.Name}}</td>
-    <td style="color: var(--color-text-dim);">{{.Date}}</td>
+    <td style="color: var(--color-text-dim);">
+        {{.Date}}<br>
+        {{ if eq .Status "working" }}
+        <small class="countdown" data-start="{{.DateUnix}}" data-duration="{{.MaxTimeSeconds}}">Calculando...</small>
+        {{ end }}
+    </td>
     <td>
         <span class="status-indicator status-{{.Status}}">
             {{ if eq .Status "working" }}
@@ -18,11 +23,18 @@
         </span>
     </td>
     <td class="actions-cell">
+        {{ if eq .Status "working" }}
+        <button hx-post="/stop?id={{.ID}}"
+            hx-confirm="¿Deseas detener la extracción ahora? Se guardarán los resultados obtenidos."
+            class="btn-action stop-button" style="background: var(--color-warning); color: #000;">Detener 🛑</button>
+        {{ end }}
+
         {{ if eq .Status "ok" }}
         <a href="/download?id={{.ID}}" download class="btn-action download-button">Descargar CSV</a>
         {{ end }}
+
         <button hx-delete="/delete?id={{.ID}}" hx-target="closest tr" hx-swap="outerHTML"
-            hx-confirm="¿Estás seguro de que quieres eliminar este trabajo?"
+            hx-confirm="¿Estás seguro de que quieres eliminar este trabajo y sus archivos?"
             class="btn-action delete-button">Eliminar</button>
     </td>
 </tr>

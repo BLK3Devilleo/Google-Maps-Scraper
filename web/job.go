@@ -29,11 +29,13 @@ type JobRepository interface {
 }
 
 type Job struct {
-	ID     string
-	Name   string
-	Date   time.Time
-	Status string
-	Data   JobData
+	ID             string
+	Name           string
+	Date           time.Time
+	DateUnix       int64
+	Status         string
+	Data           JobData
+	MaxTimeSeconds int
 }
 
 func (j *Job) Validate() error {

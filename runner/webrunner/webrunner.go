@@ -223,6 +223,9 @@ func (w *webrunner) scrapeJob(ctx context.Context, job *web.Job) error {
 		mateCtx, cancel := context.WithTimeout(ctx, time.Duration(allowedSeconds)*time.Second)
 		defer cancel()
 
+		w.svc.RegisterCancel(job.ID, cancel)
+		defer w.svc.UnregisterCancel(job.ID)
+
 		exitMonitor.SetCancelFunc(cancel)
 
 		go exitMonitor.Run(mateCtx)
