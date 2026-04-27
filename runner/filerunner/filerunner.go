@@ -88,6 +88,7 @@ func (r *fileRunner) Run(ctx context.Context) (err error) {
 		dedup,
 		exitMonitor,
 		r.cfg.ExtraReviews,
+		false,
 	)
 	if err != nil {
 		return err
