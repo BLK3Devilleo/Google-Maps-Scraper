@@ -101,7 +101,7 @@ func CreateSeedJobs(
 				opts = append(opts, gmaps.WithExtraReviews())
 			}
 
-			job = gmaps.NewGmapJob(id, langCode, query, maxDepth, email, geoCoordinates, zoom, opts...)
+			job = gmaps.NewGmapJob(id, langCode, query, maxDepth, email, social, geoCoordinates, zoom, opts...)
 		} else {
 			jparams := gmaps.MapSearchParams{
 				Location: gmaps.MapLocation{
@@ -113,7 +113,9 @@ func CreateSeedJobs(
 				Query:     query,
 				ViewportW: 1920,
 				ViewportH: 450,
-				Hl:        langCode,
+				Hl:            langCode,
+				ExtractEmail:  email,
+				ExtractSocial: social,
 			}
 
 			opts := []gmaps.SearchJobOptions{}

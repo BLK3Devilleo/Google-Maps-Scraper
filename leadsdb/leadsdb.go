@@ -119,9 +119,9 @@ func convertToLead(entry *gmaps.Entry) (*leadsdb.Lead, error) {
 	}
 
 	// Set coordinates if available
-	if entry.Latitude != 0 || entry.Longtitude != 0 {
+	if entry.Latitude != 0 || entry.Longitude != 0 {
 		lead.Latitude = leadsdb.Ptr(entry.Latitude)
-		lead.Longitude = leadsdb.Ptr(entry.Longtitude)
+		lead.Longitude = leadsdb.Ptr(entry.Longitude)
 	}
 
 	// Set rating if available

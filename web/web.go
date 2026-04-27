@@ -732,7 +732,7 @@ func securityHeaders(next http.Handler) http.Handler {
 				"worker-src 'self' blob:; "+
 				"style-src 'self' 'unsafe-inline' fonts.googleapis.com; "+
 				"img-src 'self' data: cdn.redoc.ly; "+
-				"font-src 'self' fonts.gstatic.com; "+
+				"font-src 'self' fonts.gstatic.com frontend-cdn.perplexity.ai; "+
 				"connect-src 'self'")
 
 		next.ServeHTTP(w, r)

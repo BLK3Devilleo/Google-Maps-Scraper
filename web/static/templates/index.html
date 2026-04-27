@@ -51,6 +51,25 @@
                         <summary>Ajustes Geográficos (Ubicación)</summary>
                         <fieldset>
                             <div class="form-group">
+                                <label for="location-presets">Mis Ubicaciones Guardadas:</label>
+                                <select id="location-presets" onchange="loadPreset()"
+                                    style="width: 100%; padding: 12px; border-radius: 10px; background: var(--color-background); color: white; border: 1px solid var(--color-border);">
+                                    <option value="">-- Seleccionar --</option>
+                                </select>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px;">
+                                <div style="flex: 1;">
+                                    <label for="new-location-name" style="font-size: 11px;">Guardar como (ej:
+                                        Valencia/Centro):</label>
+                                    <input type="text" id="new-location-name" placeholder="Nombre de ubicación">
+                                </div>
+                                <button type="button" onclick="saveCurrentLocation()" class="btn-action"
+                                    style="background: var(--color-accent); color: #000; height: 46px; white-space: nowrap; font-size: 11px;">Guardar
+                                    💾</button>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="zoom">Zoom (Nivel 0-21):</label>
                                 <input type="number" id="zoom" name="zoom" value="{{.Zoom}}">
                             </div>

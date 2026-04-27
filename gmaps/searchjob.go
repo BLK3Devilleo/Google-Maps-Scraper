@@ -24,8 +24,10 @@ type MapSearchParams struct {
 	Location  MapLocation
 	Query     string
 	ViewportW int
-	ViewportH int
-	Hl        string
+	ViewportH     int
+	Hl            string
+	ExtractEmail  bool
+	ExtractSocial bool
 }
 
 type SearchJob struct {
@@ -95,6 +97,19 @@ func (j *SearchJob) Process(_ context.Context, resp *scrapemate.Response) (any, 
 		j.ExitMonitor.IncrSeedCompleted(1)
 		j.ExitMonitor.IncrPlacesFound(len(entries))
 		j.ExitMonitor.IncrPlacesCompleted(len(entries))
+	}
+
+	if (j.params.ExtractEmail || j.params.ExtractSocial) && len(entries) > 0 {
+		var next []scrapemate.IJob
+		for i := range entries {
+			entry := entries[i].(Entry)
+			if entry.IsWebsiteValidForEmail() {
+				next = append(next, NewEmailJob(j.ID, &entry))
+			}
+		}
+		if len(next) > 0 {
+			return nil, next, nil
+		}
 	}
 
 	return entries, nil, nil

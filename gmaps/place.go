@@ -17,13 +17,14 @@ type PlaceJobOptions func(*PlaceJob)
 type PlaceJob struct {
 	scrapemate.Job
 
-	UsageInResultststs  bool
+	UsageInResults      bool
 	ExtractEmail        bool
+	ExtractSocial       bool
 	ExitMonitor         exiter.Exiter
 	ExtractExtraReviews bool
 }
 
-func NewPlaceJob(parentID, langCode, u string, extractEmail, extraExtraReviews bool, opts ...PlaceJobOptions) *PlaceJob {
+func NewPlaceJob(parentID, langCode, u string, extractEmail, extractSocial, extraExtraReviews bool, opts ...PlaceJobOptions) *PlaceJob {
 	const (
 		defaultPrio       = scrapemate.PriorityMedium
 		defaultMaxRetries = 3
@@ -41,8 +42,9 @@ func NewPlaceJob(parentID, langCode, u string, extractEmail, extraExtraReviews b
 		},
 	}
 
-	job.UsageInResultststs = true
+	job.UsageInResults = true
 	job.ExtractEmail = extractEmail
+	job.ExtractSocial = extractSocial
 	job.ExtractExtraReviews = extraExtraReviews
 
 	for _, opt := range opts {
@@ -94,7 +96,7 @@ func (j *PlaceJob) Process(_ context.Context, resp *scrapemate.Response) (any, [
 		entry.UserReviewsExtended = append(entry.UserReviewsExtended, convertedReviews...)
 	}
 
-	if j.ExtractEmail && entry.IsWebsiteValidForEmail() {
+	if (j.ExtractEmail || j.ExtractSocial) && entry.IsWebsiteValidForEmail() {
 		opts := []EmailExtractJobOptions{}
 		if j.ExitMonitor != nil {
 			opts = append(opts, WithEmailJobExitMonitor(j.ExitMonitor))
@@ -264,7 +266,7 @@ func (j *PlaceJob) getReviewCount(data []byte) int {
 }
 
 func (j *PlaceJob) UseInResults() bool {
-	return j.UsageInResultststs
+	return j.UsageInResults
 }
 
 const js = `
