@@ -93,6 +93,19 @@ func New(svc *Service, addr string) (*Server, error) {
 		}
 	})
 
+	mux.HandleFunc("/api/locations", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			ans.getLocations(w, r)
+		case http.MethodPost:
+			ans.createLocation(w, r)
+		case http.MethodDelete:
+			ans.deleteLocation(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	mux.HandleFunc("/api/v1/jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		r = requestWithID(r)
 
@@ -671,6 +684,41 @@ func renderJSON(w http.ResponseWriter, code int, data any) {
 
 func formatDate(t time.Time) string {
 	return t.Format("Jan 02, 2006 15:04:05")
+}
+
+func (s *Server) getLocations(w http.ResponseWriter, r *http.Request) {
+	locs, err := s.svc.GetLocations(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	renderJSON(w, http.StatusOK, locs)
+}
+
+func (s *Server) createLocation(w http.ResponseWriter, r *http.Request) {
+	var loc Location
+	if err := json.NewDecoder(r.Body).Decode(&loc); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := s.svc.CreateLocation(r.Context(), &loc); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (s *Server) deleteLocation(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
+	if err := s.svc.DeleteLocation(r.Context(), id); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func securityHeaders(next http.Handler) http.Handler {

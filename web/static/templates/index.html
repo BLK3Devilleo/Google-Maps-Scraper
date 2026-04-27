@@ -89,6 +89,12 @@
                                     (Webs):</label>
                                 <input type="checkbox" id="email" name="email" {{if .Email}}checked{{end}}>
                             </div>
+                            <div class="form-group checkbox-container">
+                                <label for="social" style="display: inline-block; margin-bottom: 0;">Extraer Redes
+                                    Sociales
+                                    (Webs):</label>
+                                <input type="checkbox" id="social" name="social" {{if .Social}}checked{{end}}>
+                            </div>
                             <div class="form-group">
                                 <label for="maxtime">Tiempo Máximo (Ej: 15m):</label>
                                 <input type="text" id="maxtime" name="maxtime" value="{{.MaxTime}}">
@@ -150,6 +156,48 @@
     </div>
 
     <script>
+        function fetchLocations() {
+            fetch('/api/locations')
+                .then(r => r.json())
+                .then(data => {
+                    const select = document.getElementById('location-presets');
+                    select.innerHTML = '<option value="">-- Mis Ubicaciones --</option>';
+                    data.forEach(loc => {
+                        const opt = document.createElement('option');
+                        opt.value = JSON.stringify(loc);
+                        opt.innerText = loc.path;
+                        select.appendChild(opt);
+                    });
+                });
+        }
+
+        function saveCurrentLocation() {
+            const path = document.getElementById('new-location-name').value;
+            const lat = document.getElementById('latitude').value;
+            const lon = document.getElementById('longitude').value;
+
+            if (!path || !lat || !lon) {
+                alert('Por favor, introduce un nombre y coordenadas válidas.');
+                return;
+            }
+
+            fetch('/api/locations', {
+                method: 'POST',
+                body: JSON.stringify({ path, lat, lon })
+            }).then(() => {
+                document.getElementById('new-location-name').value = '';
+                fetchLocations();
+            });
+        }
+
+        function loadPreset() {
+            const val = document.getElementById('location-presets').value;
+            if (!val) return;
+            const loc = JSON.parse(val);
+            document.getElementById('latitude').value = loc.lat;
+            document.getElementById('longitude').value = loc.lon;
+        }
+
         function viewResults(id, name) {
             document.getElementById('modal-title').innerText = `Leads: ${name}`;
             const tbody = document.getElementById('results-tbody');
@@ -170,11 +218,11 @@
                     // Headers
                     const headers = Object.keys(data[0]);
                     let headHtml = '<tr>';
-                    const mainHeaders = ['title', 'category', 'address', 'website', 'phone', 'emails'];
-                    headers.forEach(h => {
-                        if (mainHeaders.includes(h.toLowerCase()) || mainHeaders.includes(h)) {
-                            headHtml += `<th>${h.toUpperCase()}</th>`;
-                        }
+                    const mainHeaders = ['title', 'review_rating', 'category', 'phone', 'website', 'emails', 'socials'];
+                    mainHeaders.forEach(h => {
+                        const label = h === 'review_rating' ? 'Puntuación' :
+                            h === 'socials' ? 'Redes' : h.toUpperCase();
+                        headHtml += `<th>${label}</th>`;
                     });
                     headHtml += '</tr>';
                     thead.innerHTML = headHtml;
@@ -183,10 +231,26 @@
                     let bodyHtml = '';
                     data.forEach(row => {
                         bodyHtml += '<tr>';
-                        headers.forEach(h => {
-                            if (mainHeaders.includes(h.toLowerCase()) || mainHeaders.includes(h)) {
-                                bodyHtml += `<td>${row[h] || '-'}</td>`;
+                        mainHeaders.forEach(h => {
+                            let value = row[h] || '-';
+                            if (h === 'review_rating') {
+                                const rating = parseFloat(value) || 0;
+                                value = `<span style="color: var(--color-primary);">⭐ ${rating.toFixed(1)}</span>`;
+                            } else if (h === 'socials') {
+                                let socialsHtml = '';
+                                if (value && value !== '-') {
+                                    try {
+                                        const socials = JSON.parse(value);
+                                        Object.entries(socials).forEach(([p, link]) => {
+                                            socialsHtml += `<a href="${link}" target="_blank" title="${p}" style="margin-right:8px; font-size:16px;">${getSocialIcon(p)}</a>`;
+                                        });
+                                    } catch (e) { }
+                                }
+                                value = socialsHtml || '-';
+                            } else if (h === 'website' && value !== '-') {
+                                value = `<a href="${value}" target="_blank" style="color: var(--color-accent);">Visitar Website</a>`;
                             }
+                            bodyHtml += `<td>${value}</td>`;
                         });
                         bodyHtml += '</tr>';
                     });
@@ -195,6 +259,18 @@
                 .catch(err => {
                     tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 40px; color: var(--color-error);">Error al cargar los datos: ${err}</td></tr>`;
                 });
+        }
+
+        function getSocialIcon(platform) {
+            const icons = {
+                'facebook': '🔵',
+                'instagram': '📸',
+                'twitter': '🐦',
+                'linkedin': '🔗',
+                'youtube': '📺',
+                'tiktok': '🎵'
+            };
+            return icons[platform] || '🌐';
         }
 
         function closeModal() {
@@ -220,6 +296,7 @@
         }
 
         setInterval(updateTimers, 1000);
+        fetchLocations();
     </script>
 </body>
 

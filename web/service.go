@@ -146,3 +146,19 @@ func (s *Service) GetResults(id string) ([]map[string]string, error) {
 
 	return results, nil
 }
+
+func (s *Service) CreateLocation(ctx context.Context, loc *Location) error {
+	loc.ID = uuid.New().String()
+	if err := loc.Validate(); err != nil {
+		return err
+	}
+	return s.repo.CreateLocation(ctx, loc)
+}
+
+func (s *Service) GetLocations(ctx context.Context) ([]Location, error) {
+	return s.repo.GetLocations(ctx)
+}
+
+func (s *Service) DeleteLocation(ctx context.Context, id string) error {
+	return s.repo.DeleteLocation(ctx, id)
+}

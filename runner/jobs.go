@@ -28,6 +28,7 @@ func CreateSeedJobs(
 	dedup deduper.Deduper,
 	exitMonitor exiter.Exiter,
 	extraReviews bool,
+	social bool,
 ) (jobs []scrapemate.IJob, err error) {
 	var lat, lon float64
 

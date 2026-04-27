@@ -207,6 +207,13 @@ func initDatabase(path string) (*sql.DB, error) {
 }
 
 func createSchema(db *sql.DB) error {
+	if err := createJobsTable(db); err != nil {
+		return err
+	}
+	return createLocationsTable(db)
+}
+
+func createJobsTable(db *sql.DB) error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS jobs (
 			id TEXT PRIMARY KEY,
@@ -217,6 +224,49 @@ func createSchema(db *sql.DB) error {
 			updated_at INT NOT NULL
 		)
 	`)
+	return err
+}
 
+func createLocationsTable(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS locations (
+			id TEXT PRIMARY KEY,
+			path TEXT NOT NULL,
+			lat TEXT NOT NULL,
+			lon TEXT NOT NULL,
+			created_at INT NOT NULL
+		)
+	`)
+	return err
+}
+
+func (repo *repo) CreateLocation(ctx context.Context, loc *web.Location) error {
+	const q = `INSERT INTO locations (id, path, lat, lon, created_at) VALUES (?, ?, ?, ?, ?)`
+	_, err := repo.db.ExecContext(ctx, q, loc.ID, loc.Path, loc.Lat, loc.Lon, time.Now().Unix())
+	return err
+}
+
+func (repo *repo) GetLocations(ctx context.Context) ([]web.Location, error) {
+	const q = `SELECT id, path, lat, lon FROM locations ORDER BY path ASC`
+	rows, err := repo.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var res []web.Location
+	for rows.Next() {
+		var l web.Location
+		if err := rows.Scan(&l.ID, &l.Path, &l.Lat, &l.Lon); err != nil {
+			return nil, err
+		}
+		res = append(res, l)
+	}
+	return res, nil
+}
+
+func (repo *repo) DeleteLocation(ctx context.Context, id string) error {
+	const q = `DELETE FROM locations WHERE id = ?`
+	_, err := repo.db.ExecContext(ctx, q, id)
 	return err
 }

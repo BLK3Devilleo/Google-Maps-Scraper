@@ -84,8 +84,36 @@ func (j *EmailExtractJob) Process(ctx context.Context, resp *scrapemate.Response
 	}
 
 	j.Entry.Emails = emails
+	j.Entry.Socials = docSocialExtractor(doc)
 
 	return j.Entry, nil, nil
+}
+
+func docSocialExtractor(doc *goquery.Document) map[string]string {
+	socials := make(map[string]string)
+	doc.Find("a[href]").Each(func(_ int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if !exists {
+			return
+		}
+
+		lowerHref := strings.ToLower(href)
+
+		if strings.Contains(lowerHref, "facebook.com") {
+			socials["facebook"] = href
+		} else if strings.Contains(lowerHref, "instagram.com") {
+			socials["instagram"] = href
+		} else if strings.Contains(lowerHref, "twitter.com") || strings.Contains(lowerHref, "x.com") {
+			socials["twitter"] = href
+		} else if strings.Contains(lowerHref, "linkedin.com") {
+			socials["linkedin"] = href
+		} else if strings.Contains(lowerHref, "youtube.com") {
+			socials["youtube"] = href
+		} else if strings.Contains(lowerHref, "tiktok.com") {
+			socials["tiktok"] = href
+		}
+	})
+	return socials
 }
 
 func (j *EmailExtractJob) ProcessOnFetchError() bool {

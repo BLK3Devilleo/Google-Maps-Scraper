@@ -26,6 +26,10 @@ type JobRepository interface {
 	Delete(context.Context, string) error
 	Select(context.Context, SelectParams) ([]Job, error)
 	Update(context.Context, *Job) error
+
+	CreateLocation(context.Context, *Location) error
+	GetLocations(context.Context) ([]Location, error)
+	DeleteLocation(context.Context, string) error
 }
 
 type Job struct {
@@ -72,6 +76,7 @@ type JobData struct {
 	Radius   int           `json:"radius"`
 	Depth    int           `json:"depth"`
 	Email    bool          `json:"email"`
+	Social   bool          `json:"social"`
 	MaxTime  time.Duration `json:"max_time"`
 	Proxies  []string      `json:"proxies"`
 }

@@ -57,7 +57,7 @@ header {
     background-color: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 20px 40px;
+    padding: 24px 48px;
     border-bottom: 1px solid var(--glass-border);
     display: flex;
     justify-content: space-between;
@@ -71,6 +71,7 @@ header h1 {
     letter-spacing: -0.025em;
     background: linear-gradient(to right, var(--color-primary), #fff);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
 }
@@ -210,14 +211,32 @@ button[type="submit"] {
     color: #000;
     font-weight: 700;
     border: none;
-    padding: 16px;
-    border-radius: 12px;
+    padding: 18px;
+    border-radius: 14px;
     cursor: pointer;
     font-size: 15px;
     text-transform: uppercase;
-    letter-spacing: 0.025em;
-    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+button[type="submit"]::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.5s;
+}
+
+button[type="submit"]:hover::after {
+    left: 100%;
 }
 
 button[type="submit"]:hover {
@@ -311,18 +330,24 @@ tbody tr:hover {
 }
 
 .btn-action {
-    padding: 6px 12px;
-    border-radius: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .download-button {
-    background: var(--color-success);
+    background: linear-gradient(135deg, var(--color-success), #059669);
     color: white;
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .download-button:hover {
@@ -338,6 +363,22 @@ tbody tr:hover {
 .delete-button:hover {
     background: rgba(239, 68, 68, 0.1);
     border-color: var(--color-error);
+}
+
+.btn-utility {
+    padding: 10px 20px;
+    background: var(--color-surface-hover);
+    color: white;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btn-utility:hover {
+    background: var(--color-border);
+    border-color: var(--color-text-dim);
 }
 
 .spinner {
