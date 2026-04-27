@@ -104,7 +104,7 @@ func (j *PlaceJob) Process(_ context.Context, resp *scrapemate.Response) (any, [
 
 		emailJob := NewEmailJob(j.ID, &entry, opts...)
 
-		j.UsageInResultststs = false
+		j.UsageInResults = false
 
 		return nil, []scrapemate.IJob{emailJob}, nil
 	} else if j.ExitMonitor != nil {

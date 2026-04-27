@@ -102,9 +102,9 @@ func (j *SearchJob) Process(_ context.Context, resp *scrapemate.Response) (any, 
 	if (j.params.ExtractEmail || j.params.ExtractSocial) && len(entries) > 0 {
 		var next []scrapemate.IJob
 		for i := range entries {
-			entry := entries[i].(Entry)
+			entry := entries[i]
 			if entry.IsWebsiteValidForEmail() {
-				next = append(next, NewEmailJob(j.ID, &entry))
+				next = append(next, NewEmailJob(j.ID, entry))
 			}
 		}
 		if len(next) > 0 {
