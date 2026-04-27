@@ -199,6 +199,7 @@ type formData struct {
 	Lon      string
 	Depth    int
 	Email    bool
+	Social   bool
 	Proxies  []string
 }
 
@@ -262,6 +263,7 @@ func (s *Server) index(w http.ResponseWriter, r *http.Request) {
 		Lon:      "0",
 		Depth:    10,
 		Email:    false,
+		Social:   false,
 	}
 
 	_ = tmpl.Execute(w, data)
@@ -354,6 +356,7 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newJob.Data.Email = r.Form.Get("email") == "on"
+	newJob.Data.Social = r.Form.Get("social") == "on"
 
 	proxies := strings.Split(r.Form.Get("proxies"), "\n")
 	if len(proxies) > 0 {
