@@ -286,6 +286,12 @@
                 </div>
             </div>
             <div class="content">
+                <div class="toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
+                    <div class="search-box" style="flex: 1; max-width: 300px;">
+                        <input type="text" id="dashboard-filter" placeholder="Filtrar paquetes..." onkeyup="filterDashboard()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); padding: 10px 40px; border-radius: 12px; width: 100%;">
+                    </div>
+                    <div style="color: var(--color-text-dim); font-size: 13px; font-weight: 600;">📦 Mis Paquetes de Datos</div>
+                </div>
                 <div id="spinner" class="spinner"></div>
                 <div class="dashboard-grid" id="job-grid" hx-get="/jobs" hx-trigger="load, every 10s">
                     <!-- Los paquetes de datos se insertan aquí vía HTMX -->
@@ -369,6 +375,30 @@
             document.getElementById('latitude').value = loc.lat;
             document.getElementById('longitude').value = loc.lon;
         }
+
+        function filterDashboard() {
+            const query = document.getElementById('dashboard-filter').value.toLowerCase();
+            const cards = document.querySelectorAll('.job-card');
+            cards.forEach(card => {
+                const title = card.querySelector('.job-card-title').innerText.toLowerCase();
+                card.style.display = title.includes(query) ? '' : 'none';
+            });
+        }
+
+        function updateProgressBars() {
+            const now = Math.floor(Date.now() / 1000);
+            document.querySelectorAll('.progress-bar-inner').forEach(bar => {
+                const start = parseInt(bar.dataset.start);
+                const duration = parseInt(bar.dataset.duration);
+                if (duration > 0) {
+                    let progress = ((now - start) / duration) * 100;
+                    if (progress > 98) progress = 98; // Stay near end until truly finished
+                    bar.style.width = progress + '%';
+                }
+            });
+        }
+
+        setInterval(updateProgressBars, 1000);
 
         function viewResults(id, name, type) {
             document.getElementById('modal-title').innerText = `${type === 'web' ? 'Inspección' : 'Leads'}: ${name}`;

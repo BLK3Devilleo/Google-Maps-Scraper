@@ -138,17 +138,33 @@
                     <thead>
                         <tr>
                             <th class="checkbox-cell"><input type="checkbox" id="select-all" onclick="toggleAll()"></th>
+                            {{if eq .Job.Type "web"}}
+                            <th>Título de la Web</th>
+                            <th>Email</th>
+                            <th>Teléfonos</th>
+                            <th>Redes Sociales</th>
+                            <th>URL Original</th>
+                            {{else}}
                             <th>Nombre del Negocio</th>
                             <th>Categoría</th>
                             <th>Puntuación</th>
                             <th>Web</th>
                             <th>Email / Redes</th>
+                            {{end}}
                         </tr>
                     </thead>
                     <tbody>
                         {{range .Results}}
                         <tr class="lead-row">
                             <td class="checkbox-cell"><input type="checkbox" class="lead-cb" onchange="updateFloatingManager()"></td>
+                            
+                            {{if eq $.Job.Type "web"}}
+                            <td style="font-weight: 600; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">{{index . "title"}}</td>
+                            <td style="color: var(--color-primary); font-family: monospace;">{{index . "emails"}}</td>
+                            <td style="color: var(--color-success);">{{index . "phones"}}</td>
+                            <td>{{index . "socials"}}</td>
+                            <td><a href="{{index . "url"}}" target="_blank" style="color: var(--color-text-dim); font-size: 11px;">{{index . "url"}}</a></td>
+                            {{else}}
                             <td style="font-weight: 600;">{{index . "title"}}</td>
                             <td><span class="badge badge-category">{{index . "category"}}</span></td>
                             <td><span style="color: var(--color-primary);">⭐ {{index . "review_rating"}}</span></td>
@@ -163,6 +179,7 @@
                                     {{if index . "socials"}}🌐{{end}}
                                 </div>
                             </td>
+                            {{end}}
                         </tr>
                         {{else}}
                         <tr>

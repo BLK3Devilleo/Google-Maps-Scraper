@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -19,6 +20,7 @@ type WebProfile struct {
 	Images      []string          `json:"images"`
 	Videos      []string          `json:"videos"`
 	Emails      []string          `json:"emails"`
+	Phones      []string          `json:"phones"`
 	Socials     map[string]string `json:"socials"`
 }
 
@@ -27,6 +29,7 @@ func (w *WebProfile) CsvRow() []string {
 	images := strings.Join(w.Images, " | ")
 	videos := strings.Join(w.Videos, " | ")
 	emails := strings.Join(w.Emails, " | ")
+	phones := strings.Join(w.Phones, " | ")
 
 	return []string{
 		w.URL,
@@ -36,6 +39,7 @@ func (w *WebProfile) CsvRow() []string {
 		images,
 		videos,
 		emails,
+		phones,
 		string(socials),
 	}
 }
@@ -49,6 +53,7 @@ func (w *WebProfile) CsvHeaders() []string {
 		"images",
 		"videos",
 		"emails",
+		"phones",
 		"socials",
 	}
 }
@@ -76,10 +81,16 @@ func (j *WebInspectorJob) Process(ctx context.Context, resp *scrapemate.Response
 	}
 
 	profile := WebProfile{
-		URL:     j.URL,
-		Title:   doc.Find("title").Text(),
-		Socials: docSocialExtractor(doc),
-		Emails:  docEmailExtractor(doc),
+		URL:         j.URL,
+		Title:       strings.TrimSpace(doc.Find("title").First().Text()),
+		Description: strings.TrimSpace(doc.Find("meta[name='description']").AttrOr("content", "")),
+		Socials:     docSocialExtractor(doc),
+		Emails:      docEmailExtractor(doc),
+		Phones:      docPhoneExtractor(doc),
+	}
+
+	if profile.Description == "" {
+		profile.Description = strings.TrimSpace(doc.Find("meta[property='og:description']").AttrOr("content", ""))
 	}
 
 	// Extract Description/Summary
@@ -133,4 +144,22 @@ func resolveURL(base *url.URL, rel string) string {
 		return ""
 	}
 	return base.ResolveReference(u).String()
+}
+
+func docPhoneExtractor(doc *goquery.Document) []string {
+	var phones []string
+	body := doc.Find("body").Text()
+	// Robust phone regex (common formats)
+	re := regexp.MustCompile(`(?i)(?:(?:\+|00)\d{1,3}\s?|0)?(?:[6789]\d{2}\s?\d{3}\s?\d{3}|[6789]\d{8}|[6789]\d{2}\s?\d{2}\s?\d{2}\s?\d{2}|[6789]\d{2}\s?\d{3}\s?\d{4})`)
+	matches := re.FindAllString(body, -1)
+	
+	seen := make(map[string]bool)
+	for _, m := range matches {
+		m = strings.TrimSpace(m)
+		if len(m) >= 9 && !seen[m] {
+			phones = append(phones, m)
+			seen[m] = true
+		}
+	}
+	return phones
 }
