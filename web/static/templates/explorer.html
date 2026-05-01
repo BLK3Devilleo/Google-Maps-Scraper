@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador de Sitios | Google Maps Lead Scraper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.6/htmx.min.js"></script>
+    <style>
+        .website-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .website-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--color-border);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .website-item:hover {
+            border-color: var(--color-primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .website-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--color-primary);
+        }
+
+        .website-item .url {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .floating-actions {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--color-surface);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--color-border);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 250px;
+        }
+
+        .stats {
+            font-size: 13px;
+            color: var(--color-text-dim);
+            margin-bottom: 5px;
+        }
+
+        #selected-count {
+            color: var(--color-primary);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1 style="font-family: 'Outfit', sans-serif;">Explorador de Sitios Encontrados</h1>
+            <nav>
+                <a href="/">Volver al Panel</a>
+            </nav>
+        </header>
+        <main style="display: block;">
+            <div class="content" style="width: 100%;">
+                <div class="stats-overview" style="margin-bottom: 30px;">
+                    <p>Aquí puedes ver todos los sitios web únicos encontrados en tus trabajos anteriores. Selecciona los que quieras volver a investigar en profundidad.</p>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="form-group" style="margin: 0; flex: 1; max-width: 400px;">
+                        <input type="text" id="filter" placeholder="Filtrar por URL..." onkeyup="filterWebsites()" style="padding: 10px 15px; border-radius: 10px; width: 100%;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-action" onclick="selectAll(true)" style="background: var(--color-surface);">Seleccionar Todos</button>
+                        <button class="btn-action" onclick="selectAll(false)" style="background: var(--color-surface);">Desmarcar Todos</button>
+                    </div>
+                </div>
+
+                <div class="website-list" id="website-list">
+                    {{range .}}
+                    <div class="website-item" data-url="{{.}}">
+                        <input type="checkbox" name="selected_urls" value="{{.}}" onchange="updateCount()">
+                        <span class="url" title="{{.}}">{{.}}</span>
+                        <a href="{{.}}" target="_blank" style="font-size: 12px; color: var(--color-primary);">↗️</a>
+                    </div>
+                    {{else}}
+                    <div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--color-text-dim);">
+                        <p style="font-size: 1.5rem;">No se encontraron sitios web.</p>
+                        <p>Realiza primero un trabajo de Google Maps que contenga sitios web.</p>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="floating-actions" id="actions-panel" style="display: none;">
+        <div class="stats">Sitios seleccionados: <span id="selected-count">0</span></div>
+        <div class="form-group" style="margin: 0;">
+            <label for="job-name">Nombre de la Inspección:</label>
+            <input type="text" id="job-name" placeholder="Ej: Re-escaneo de Spas">
+        </div>
+        <button id="start-btn" class="btn-primary" onclick="startScrape()" style="width: 100%; margin: 0;">Inspeccionar Seleccionados 🔍</button>
+    </div>
+
+    <script>
+        function updateCount() {
+            const checked = document.querySelectorAll('input[name="selected_urls"]:checked');
+            document.getElementById('selected-count').innerText = checked.length;
+            document.getElementById('actions-panel').style.display = checked.length > 0 ? 'flex' : 'none';
+        }
+
+        function filterWebsites() {
+            const filter = document.getElementById('filter').value.toLowerCase();
+            const items = document.querySelectorAll('.website-item');
+            items.forEach(item => {
+                const url = item.getAttribute('data-url').toLowerCase();
+                item.style.display = url.includes(filter) ? 'flex' : 'none';
+            });
+        }
+
+        function selectAll(val) {
+            const checkboxes = document.querySelectorAll('.website-item:not([style*="display: none"]) input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = val);
+            updateCount();
+        }
+
+        function startScrape() {
+            const name = document.getElementById('job-name').value;
+            if (!name) {
+                alert('Introduce un nombre para el trabajo.');
+                return;
+            }
+
+            const checked = document.querySelectorAll('input[name="selected_urls"]:checked');
+            const urls = Array.from(checked).map(cb => cb.value).join('\n');
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('urls', urls);
+
+            const btn = document.getElementById('start-btn');
+            btn.disabled = true;
+            btn.innerText = 'Iniciando...';
+
+            fetch('/web-scrape', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    return response.text().then(text => { throw new Error(text) });
+                }
+            })
+            .catch(err => {
+                alert('Error: ' + err.message);
+                btn.disabled = false;
+                btn.innerText = 'Inspeccionar Seleccionados 🔍';
+            });
+        }
+    </script>
+</body>
+
+</html>

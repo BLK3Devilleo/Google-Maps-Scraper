@@ -74,6 +74,7 @@ func New(svc *Service, addr string) (*Server, error) {
 		ans.getResults(w, r)
 	})
 	mux.HandleFunc("/jobs", ans.getJobs)
+	mux.HandleFunc("/explorer", ans.explorer)
 	mux.HandleFunc("/", ans.index)
 
 	// api routes
@@ -150,6 +151,7 @@ func New(svc *Service, addr string) (*Server, error) {
 		"static/templates/job_rows.html",
 		"static/templates/job_row.html",
 		"static/templates/redoc.html",
+		"static/templates/explorer.html",
 	}
 
 	for _, key := range tmplsKeys {
@@ -447,6 +449,27 @@ func (s *Server) webScrape(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.Execute(w, newJob)
+}
+
+func (s *Server) explorer(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	websites, err := s.svc.GetAllWebsites(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, ok := s.tmpl["static/templates/explorer.html"]
+	if !ok {
+		http.Error(w, "missing tpl", http.StatusInternalServerError)
+		return
+	}
+
+	_ = tmpl.Execute(w, websites)
 }
 
 func (s *Server) getJobs(w http.ResponseWriter, r *http.Request) {

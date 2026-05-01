@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"sort"
 )
 
 var (
@@ -163,4 +164,69 @@ func (s *Service) GetLocations(ctx context.Context) ([]Location, error) {
 
 func (s *Service) DeleteLocation(ctx context.Context, id string) error {
 	return s.repo.DeleteLocation(ctx, id)
+}
+
+func (s *Service) GetAllWebsites(ctx context.Context) ([]string, error) {
+	jobs, err := s.repo.Select(ctx, SelectParams{Status: StatusOK})
+	if err != nil {
+		return nil, err
+	}
+
+	websiteSet := make(map[string]struct{})
+
+	for _, job := range jobs {
+		datapath := filepath.Join(s.dataFolder, job.ID+".csv")
+		file, err := os.Open(datapath)
+		if err != nil {
+			continue
+		}
+		reader := csv.NewReader(file)
+		headers, err := reader.Read()
+		if err != nil {
+			file.Close()
+			continue
+		}
+
+		websiteIdx := -1
+		for i, h := range headers {
+			if h == "website" || h == "url" {
+				websiteIdx = i
+				break
+			}
+		}
+
+		if websiteIdx == -1 {
+			file.Close()
+			continue
+		}
+
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				break
+			}
+			if websiteIdx < len(record) {
+				ws := strings.TrimSpace(record[websiteIdx])
+				if ws != "" &&
+					!strings.Contains(ws, "facebook.com") &&
+					!strings.Contains(ws, "instagram.com") &&
+					!strings.Contains(ws, "twitter.com") &&
+					!strings.Contains(ws, "linkedin.com") &&
+					(strings.HasPrefix(ws, "http://") || strings.HasPrefix(ws, "https://")) {
+					websiteSet[ws] = struct{}{}
+				}
+			}
+		}
+		file.Close()
+	}
+
+	var websites []string
+	for ws := range websiteSet {
+		websites = append(websites, ws)
+	}
+	sort.Strings(websites)
+	return websites, nil
 }
