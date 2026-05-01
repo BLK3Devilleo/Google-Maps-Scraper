@@ -1,0 +1,65 @@
+║
+║ App Name: proyectos-por-testear-scrapper-maps-jooleh                         ║
+║ Build Compose 🐳                                                             ║
+║ Detected: 0 mounts 📂                                                        ║
+║ Command: docker compose -p proyectos-por-testear-scrapper-maps-jooleh -f     ║
+║ ./docker-compose.yml up -d --build --remove-orphans                          ║
+║ Source Type: docker github ✅                                                ║
+║ Compose Type: docker-compose ✅                                              ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+Image proyectos-por-testear-scrapper-maps-jooleh-scraper Building
+#1 [internal] load local bake definitions
+#1 reading from stdin 662B done
+#1 DONE 0.0s
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 2.02kB done
+#2 DONE 0.0s
+#3 [internal] load metadata for docker.io/library/ubuntu:20.04
+#3 ...
+#4 [internal] load metadata for docker.io/library/debian:trixie-slim
+#4 DONE 0.7s
+#5 [internal] load metadata for docker.io/library/golang:1.25.6-trixie
+#5 DONE 0.8s
+#3 [internal] load metadata for docker.io/library/ubuntu:20.04
+#3 DONE 1.4s
+#6 [internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+#7 [builder 1/6] FROM docker.io/library/golang:1.25.6-trixie@sha256:0032c99f1682c40dca54932e2fe0156dc575ed12c6a4fdec94df9db7a0c17ab0
+#7 DONE 0.0s
+#8 [stage-2 1/6] FROM docker.io/library/debian:trixie-slim@sha256:cedb1ef40439206b673ee8b33a46a03a0c9fa90bf3732f54704f99cb061d2c5a
+#8 DONE 0.0s
+#9 [playwright-deps 1/2] FROM docker.io/library/ubuntu:20.04@sha256:8feb4d8ca5354def3d8fce243717141ce31e2c428701f6682bd2fafe15388214
+#9 DONE 0.0s
+#10 [internal] load build context
+#10 transferring context: 13.73MB 0.6s done
+#10 DONE 0.6s
+#11 [builder 3/6] COPY go.mod go.sum ./
+#11 CACHED
+#12 [builder 2/6] WORKDIR /app
+#12 CACHED
+#13 [builder 4/6] RUN go mod download
+#13 CACHED
+#14 [builder 5/6] COPY . .
+#14 DONE 0.5s
+#15 [builder 6/6] RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /usr/bin/google-maps-scraper
+#15 60.42 # github.com/gosom/google-maps-scraper/gmaps
+#15 60.42 gmaps/webinspector.go:25:16: undefined: json
+#15 ERROR: process "/bin/sh -c CGO_ENABLED=0 go build -ldflags=\"-w -s\" -o /usr/bin/google-maps-scraper" did not complete successfully: exit code: 1
+------
+> [builder 6/6] RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /usr/bin/google-maps-scraper:
+60.42 # github.com/gosom/google-maps-scraper/gmaps
+60.42 gmaps/webinspector.go:25:16: undefined: json
+------
+Dockerfile:25
+--------------------
+|     RUN go mod download
+|     COPY . .
+| >>> RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /usr/bin/google-maps-scraper
+|
+|     # Final stage
+--------------------
+failed to solve: process "/bin/sh -c CGO_ENABLED=0 go build -ldflags=\"-w -s\" -o /usr/bin/google-maps-scraper" did not complete successfully: exit code: 1
+Error: ❌ Docker command failed
+Error occurred ❌, check the logs for details.
