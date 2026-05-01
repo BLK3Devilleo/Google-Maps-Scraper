@@ -71,7 +71,15 @@ func New(svc *Service, addr string) (*Server, error) {
 
 		ans.getResults(w, r)
 	})
+	mux.HandleFunc("/jobs/results/delete", func(w http.ResponseWriter, r *http.Request) {
+		r = requestWithID(r)
+		ans.deleteResults(w, r)
+	})
 	mux.HandleFunc("/jobs", ans.getJobs)
+	mux.HandleFunc("/job/{id}", func(w http.ResponseWriter, r *http.Request) {
+		r = requestWithID(r)
+		ans.jobDetail(w, r)
+	})
 	mux.HandleFunc("/explorer", ans.explorer)
 	mux.HandleFunc("/", ans.index)
 
@@ -150,6 +158,7 @@ func New(svc *Service, addr string) (*Server, error) {
 		"static/templates/job_row.html",
 		"static/templates/redoc.html",
 		"static/templates/explorer.html",
+		"static/templates/job_detail.html",
 	}
 
 	for _, key := range tmplsKeys {
@@ -470,6 +479,47 @@ func (s *Server) explorer(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.Execute(w, websites)
 }
 
+func (s *Server) jobDetail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, ok := getIDFromRequest(r)
+	if !ok {
+		http.Error(w, "Invalid ID", http.StatusUnprocessableEntity)
+		return
+	}
+
+	job, err := s.svc.Get(r.Context(), id.String())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	results, err := s.svc.GetResults(job.ID)
+	if err != nil {
+		// results might not be ready yet
+		results = []map[string]string{}
+	}
+
+	tmpl, ok := s.tmpl["static/templates/job_detail.html"]
+	if !ok {
+		http.Error(w, "missing tpl", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Job     Job
+		Results []map[string]string
+	}{
+		Job:     job,
+		Results: results,
+	}
+
+	_ = tmpl.Execute(w, data)
+}
+
 func (s *Server) getJobs(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -598,6 +648,35 @@ func (s *Server) getResults(w http.ResponseWriter, r *http.Request) {
 	}
 
 	renderJSON(w, http.StatusOK, results)
+}
+
+func (s *Server) deleteResults(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, ok := getIDFromRequest(r)
+	if !ok {
+		http.Error(w, "Invalid ID", http.StatusUnprocessableEntity)
+		return
+	}
+
+	var req struct {
+		Titles []string `json:"titles"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.svc.DeleteResults(id.String(), req.Titles); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 type apiError struct {

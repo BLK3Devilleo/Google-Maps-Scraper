@@ -150,6 +150,78 @@ func (s *Service) GetResults(id string) ([]map[string]string, error) {
 	return results, nil
 }
 
+func (s *Service) DeleteResults(id string, titlesToDelete []string) error {
+	datapath, err := s.GetCSV(context.Background(), id)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open(datapath)
+	if err != nil {
+		return err
+	}
+
+	reader := csv.NewReader(file)
+	headers, err := reader.Read()
+	if err != nil {
+		file.Close()
+		return err
+	}
+
+	var titleIdx = -1
+	for i, h := range headers {
+		if h == "title" {
+			titleIdx = i
+			break
+		}
+	}
+
+	var records [][]string
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			file.Close()
+			return err
+		}
+
+		shouldDelete := false
+		if titleIdx != -1 {
+			rowTitle := record[titleIdx]
+			for _, t := range titlesToDelete {
+				if rowTitle == t {
+					shouldDelete = true
+					break
+				}
+			}
+		}
+
+		if !shouldDelete {
+			records = append(records, record)
+		}
+	}
+	file.Close()
+
+	// Write back the remaining records
+	outFile, err := os.Create(datapath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	writer := csv.NewWriter(outFile)
+	if err := writer.Write(headers); err != nil {
+		return err
+	}
+	if err := writer.WriteAll(records); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Service) CreateLocation(ctx context.Context, loc *Location) error {
 	loc.ID = uuid.New().String()
 	if err := loc.Validate(); err != nil {

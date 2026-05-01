@@ -13,6 +13,81 @@
     <link rel="stylesheet" href="/static/css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.6/htmx.min.js"></script>
     <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 10px;
+        }
+
+        .job-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-premium);
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .job-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .job-card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-text);
+            margin-bottom: 5px;
+        }
+
+        .job-card-date {
+            font-size: 12px;
+            color: var(--color-text-dim);
+        }
+
+        .job-card-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--color-border);
+            padding-top: 15px;
+        }
+
+        .job-type-badge {
+            font-size: 10px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            color: var(--color-text-dim);
+        }
+
+        .btn-manage {
+            background: linear-gradient(135deg, var(--color-primary), #d97706);
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 13px;
+        }
+    </style>
+    <style>
         :root {
             --color-background: #0f172a;
             --color-surface: #1e293b;
@@ -74,7 +149,7 @@
 
                 <div id="maps-form-container">
                     <div id="error-container" class="error-message"></div>
-                    <form hx-post="/scrape" hx-target="#job-table tbody" hx-swap="beforeend" hx-indicator="#spinner"
+                    <form hx-post="/scrape" hx-target="#job-grid" hx-swap="afterbegin" hx-indicator="#spinner"
                         hx-on::before-request="document.getElementById('error-container').innerHTML = ''"
                         hx-on::after-request="if(!event.detail.successful) document.getElementById('error-container').innerHTML = event.detail.xhr.responseText">
 
@@ -190,7 +265,7 @@
 
                 <div id="web-form-container" style="display: none;">
                     <div id="web-error-container" class="error-message"></div>
-                    <form hx-post="/web-scrape" hx-target="#job-table tbody" hx-swap="beforeend" hx-indicator="#spinner"
+                    <form hx-post="/web-scrape" hx-target="#job-grid" hx-swap="afterbegin" hx-indicator="#spinner"
                         hx-on::before-request="document.getElementById('web-error-container').innerHTML = ''"
                         hx-on::after-request="if(!event.detail.successful) document.getElementById('web-error-container').innerHTML = event.detail.xhr.responseText">
                         
@@ -212,20 +287,9 @@
             </div>
             <div class="content">
                 <div id="spinner" class="spinner"></div>
-                <table id="job-table">
-                    <thead>
-                        <tr>
-                            <th>ID del Trabajo</th>
-                            <th>Nombre</th>
-                            <th>Fecha</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody hx-get="/jobs" hx-trigger="load, every 10s">
-                        <!-- Las filas de trabajo se insertan aquí vía HTMX -->
-                    </tbody>
-                </table>
+                <div class="dashboard-grid" id="job-grid" hx-get="/jobs" hx-trigger="load, every 10s">
+                    <!-- Los paquetes de datos se insertan aquí vía HTMX -->
+                </div>
             </div>
         </main>
     </div>

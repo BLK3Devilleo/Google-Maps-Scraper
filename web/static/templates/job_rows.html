@@ -1,44 +1,45 @@
 {{range .}}
-<tr>
-    <td style="font-family: monospace; font-size: 12px; color: var(--color-text-dim);">{{.ID}}</td>
-    <td style="font-weight: 600;">{{.Name}}</td>
-    <td style="color: var(--color-text-dim);">
-        {{.Date}}<br>
-        {{ if eq .Status "working" }}
-        <small class="countdown" data-start="{{.DateUnix}}" data-duration="{{.MaxTimeSeconds}}">Calculando...</small>
-        {{ end }}
-    </td>
-    <td>
+<div class="job-card">
+    <div class="job-card-header">
+        <div>
+            <div class="job-card-title">{{.Name}}</div>
+            <div class="job-card-date">{{.Date.Format "02 Jan 2006, 15:04"}}</div>
+        </div>
         <span class="status-indicator status-{{.Status}}">
             {{ if eq .Status "working" }}
-            EXTRAYENDO...
+            EXTRAYENDO
             {{ else if eq .Status "ok" }}
-            COMPLETADO
+            LISTO
             {{ else if eq .Status "pending" }}
-            EN COLA
+            COLA
             {{ else if eq .Status "failed" }}
-            FALLIDO
+            ERROR
             {{ else }}
             {{.Status}}
             {{ end }}
         </span>
-    </td>
-    <td class="actions-cell">
-        <button onclick="viewResults('{{.ID}}', '{{.Name}}', '{{.Type}}')" class="btn-action view-button">🔍 Ver Resultados</button>
+    </div>
 
-        {{ if eq .Status "working" }}
-        <button hx-post="/stop?id={{.ID}}"
-            hx-confirm="¿Deseas detener la extracción ahora? Se guardarán los resultados obtenidos."
-            class="btn-action stop-button" style="background: var(--color-warning); color: #000;">Detener 🛑</button>
-        {{ end }}
+    {{ if eq .Status "working" }}
+    <div style="margin: 10px 0;">
+        <small class="countdown" data-start="{{.DateUnix}}" data-duration="{{.MaxTimeSeconds}}">Calculando...</small>
+        <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 5px;">
+            <div style="height: 100%; width: 50%; background: var(--color-primary); border-radius: 2px; animation: pulse 2s infinite;"></div>
+        </div>
+    </div>
+    {{ end }}
 
-        {{ if eq .Status "ok" }}
-        <a href="/download?id={{.ID}}" download class="btn-action download-button">Descargar CSV</a>
-        {{ end }}
-
-        <button hx-delete="/delete?id={{.ID}}" hx-target="closest tr" hx-swap="outerHTML"
-            hx-confirm="¿Estás seguro de que quieres eliminar este trabajo y sus archivos?"
-            class="btn-action delete-button">Eliminar</button>
-    </td>
-</tr>
+    <div class="job-card-footer">
+        <span class="job-type-badge">{{.Type}}</span>
+        <div class="actions-cell">
+            <a href="/job/{{.ID}}" class="btn-manage">Gestionar Leads 📂</a>
+            
+            <button hx-delete="/delete?id={{.ID}}" hx-target="closest .job-card" hx-swap="outerHTML"
+                hx-confirm="¿Eliminar este paquete de datos?"
+                class="delete-button" style="padding: 8px; border-radius: 10px; background: transparent; border: 1px solid var(--color-error); color: var(--color-error); cursor: pointer;">
+                🗑️
+            </button>
+        </div>
+    </div>
+</div>
 {{end}}
