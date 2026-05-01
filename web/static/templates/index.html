@@ -24,10 +24,16 @@
         </header>
         <main>
             <div class="sidebar">
-                <div id="error-container" class="error-message"></div>
-                <form hx-post="/scrape" hx-target="#job-table tbody" hx-swap="beforeend" hx-indicator="#spinner"
-                    hx-on::before-request="document.getElementById('error-container').innerHTML = ''"
-                    hx-on::after-request="if(!event.detail.successful) document.getElementById('error-container').innerHTML = event.detail.xhr.responseText">
+                <div class="tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--color-border); padding-bottom: 10px;">
+                    <button class="tab-btn active" onclick="switchTab('maps')" style="background: none; border: none; color: var(--color-primary); cursor: pointer; font-weight: 700; padding: 5px 10px;">Google Maps</button>
+                    <button class="tab-btn" onclick="switchTab('web')" style="background: none; border: none; color: var(--color-text-dim); cursor: pointer; font-weight: 700; padding: 5px 10px;">Web Inspector</button>
+                </div>
+
+                <div id="maps-form-container">
+                    <div id="error-container" class="error-message"></div>
+                    <form hx-post="/scrape" hx-target="#job-table tbody" hx-swap="beforeend" hx-indicator="#spinner"
+                        hx-on::before-request="document.getElementById('error-container').innerHTML = ''"
+                        hx-on::after-request="if(!event.detail.successful) document.getElementById('error-container').innerHTML = event.detail.xhr.responseText">
 
                     <fieldset>
                         <legend>Configuración del Trabajo</legend>
@@ -137,6 +143,29 @@
 
                     <button type="submit">Iniciar Extracción 🚀</button>
                 </form>
+                </div>
+
+                <div id="web-form-container" style="display: none;">
+                    <div id="web-error-container" class="error-message"></div>
+                    <form hx-post="/web-scrape" hx-target="#job-table tbody" hx-swap="beforeend" hx-indicator="#spinner"
+                        hx-on::before-request="document.getElementById('web-error-container').innerHTML = ''"
+                        hx-on::after-request="if(!event.detail.successful) document.getElementById('web-error-container').innerHTML = event.detail.xhr.responseText">
+                        
+                        <fieldset>
+                            <legend>Web Deep Inspector</legend>
+                            <div class="form-group">
+                                <label for="web-name">Nombre del Proyecto:</label>
+                                <input type="text" id="web-name" name="name" placeholder="Ej: Análisis Competencia Enero">
+                            </div>
+                            <div class="form-group">
+                                <label for="urls">URLs a inspeccionar (una por línea):</label>
+                                <textarea id="urls" name="urls" rows="10" placeholder="https://example.com&#10;https://anothersite.org"></textarea>
+                            </div>
+                        </fieldset>
+                        
+                        <button type="submit" style="background: linear-gradient(135deg, var(--color-accent), #0284c7);">Iniciar Inspección Profunda 🔍</button>
+                    </form>
+                </div>
             </div>
             <div class="content">
                 <div id="spinner" class="spinner"></div>
@@ -175,6 +204,23 @@
     </div>
 
     <script>
+        function switchTab(tab) {
+            const mapsContainer = document.getElementById('maps-form-container');
+            const webContainer = document.getElementById('web-form-container');
+            const btns = document.querySelectorAll('.tab-btn');
+            
+            if (tab === 'maps') {
+                mapsContainer.style.display = 'block';
+                webContainer.style.display = 'none';
+                btns[0].style.color = 'var(--color-primary)';
+                btns[1].style.color = 'var(--color-text-dim)';
+            } else {
+                mapsContainer.style.display = 'none';
+                webContainer.style.display = 'block';
+                btns[0].style.color = 'var(--color-text-dim)';
+                btns[1].style.color = 'var(--color-accent)';
+            }
+        }
         function fetchLocations() {
             fetch('/api/locations')
                 .then(r => r.json())
@@ -217,11 +263,11 @@
             document.getElementById('longitude').value = loc.lon;
         }
 
-        function viewResults(id, name) {
-            document.getElementById('modal-title').innerText = `Leads: ${name}`;
+        function viewResults(id, name, type) {
+            document.getElementById('modal-title').innerText = `${type === 'web' ? 'Inspección' : 'Leads'}: ${name}`;
             const tbody = document.getElementById('results-tbody');
             const thead = document.getElementById('results-thead');
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">Cargando leads...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 40px;">Cargando resultados...</td></tr>';
             thead.innerHTML = '';
 
             document.getElementById('results-modal').style.display = 'flex';
@@ -235,12 +281,22 @@
                     }
 
                     // Headers
-                    const headers = Object.keys(data[0]);
                     let headHtml = '<tr>';
-                    const mainHeaders = ['title', 'review_rating', 'category', 'phone', 'website', 'emails', 'socials'];
+                    let mainHeaders = [];
+                    
+                    if (type === 'web') {
+                        mainHeaders = ['url', 'title', 'summary', 'images', 'videos', 'emails', 'socials'];
+                    } else {
+                        mainHeaders = ['title', 'review_rating', 'category', 'phone', 'website', 'emails', 'socials'];
+                    }
+
                     mainHeaders.forEach(h => {
-                        const label = h === 'review_rating' ? 'Puntuación' :
-                            h === 'socials' ? 'Redes' : h.toUpperCase();
+                        let label = h.toUpperCase();
+                        if (h === 'review_rating') label = '⭐';
+                        if (h === 'socials') label = 'REDES';
+                        if (h === 'summary') label = 'RESUMEN';
+                        if (h === 'images') label = '📸';
+                        if (h === 'videos') label = '🎥';
                         headHtml += `<th>${label}</th>`;
                     });
                     headHtml += '</tr>';
@@ -266,8 +322,17 @@
                                     } catch (e) { }
                                 }
                                 value = socialsHtml || '-';
-                            } else if (h === 'website' && value !== '-') {
-                                value = `<a href="${value}" target="_blank" style="color: var(--color-accent);">Visitar Website</a>`;
+                            } else if (h === 'website' || h === 'url') {
+                                if (value !== '-') {
+                                    value = `<a href="${value}" target="_blank" style="color: var(--color-accent); text-decoration: underline;">${value}</a>`;
+                                }
+                            } else if (h === 'images' || h === 'videos') {
+                                if (value !== '-') {
+                                    const items = value.split(' | ');
+                                    value = `<span title="${value}">${items.length} elementos</span>`;
+                                }
+                            } else if (h === 'summary') {
+                                value = `<div style="max-width: 200px; white-space: normal; font-size: 11px;">${value}</div>`;
                             }
                             bodyHtml += `<td>${value}</td>`;
                         });

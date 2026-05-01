@@ -15,6 +15,11 @@ const (
 	StatusFailed  = "failed"
 )
 
+const (
+	JobTypeGmaps = "maps"
+	JobTypeWeb   = "web"
+)
+
 type SelectParams struct {
 	Status string
 	Limit  int
@@ -35,6 +40,7 @@ type JobRepository interface {
 type Job struct {
 	ID             string
 	Name           string
+	Type           string
 	Date           time.Time
 	DateUnix       int64
 	Status         string
@@ -87,23 +93,12 @@ func (d *JobData) Validate() error {
 	}
 
 	if d.Lang == "" {
-		return errors.New("missing lang")
+		// Allow empty lang for web jobs as we are using URLs
+		return nil
 	}
 
 	if len(d.Lang) != 2 {
 		return errors.New("invalid lang")
-	}
-
-	if d.Depth == 0 {
-		return errors.New("missing depth")
-	}
-
-	if d.MaxTime == 0 {
-		return errors.New("missing max time")
-	}
-
-	if d.FastMode && (d.Lat == "" || d.Lon == "") {
-		return errors.New("missing geo coordinates")
 	}
 
 	return nil

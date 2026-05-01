@@ -38,9 +38,9 @@ func (repo *repo) Create(ctx context.Context, job *web.Job) error {
 		return err
 	}
 
-	const q = `INSERT INTO jobs (id, name, status, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
+	const q = `INSERT INTO jobs (id, name, type, status, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	_, err = repo.db.ExecContext(ctx, q, item.ID, item.Name, item.Status, item.Data, item.CreatedAt, item.UpdatedAt)
+	_, err = repo.db.ExecContext(ctx, q, item.ID, item.Name, item.Type, item.Status, item.Data, item.CreatedAt, item.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -106,9 +106,9 @@ func (repo *repo) Update(ctx context.Context, job *web.Job) error {
 		return err
 	}
 
-	const q = `UPDATE jobs SET name = ?, status = ?, data = ?, updated_at = ? WHERE id = ?`
+	const q = `UPDATE jobs SET name = ?, type = ?, status = ?, data = ?, updated_at = ? WHERE id = ?`
 
-	_, err = repo.db.ExecContext(ctx, q, item.Name, item.Status, item.Data, item.UpdatedAt, item.ID)
+	_, err = repo.db.ExecContext(ctx, q, item.Name, item.Type, item.Status, item.Data, item.UpdatedAt, item.ID)
 
 	return err
 }
@@ -120,7 +120,7 @@ type scannable interface {
 func rowToJob(row scannable) (web.Job, error) {
 	var j job
 
-	err := row.Scan(&j.ID, &j.Name, &j.Status, &j.Data, &j.CreatedAt, &j.UpdatedAt)
+	err := row.Scan(&j.ID, &j.Name, &j.Type, &j.Status, &j.Data, &j.CreatedAt, &j.UpdatedAt)
 	if err != nil {
 		return web.Job{}, err
 	}
@@ -128,6 +128,7 @@ func rowToJob(row scannable) (web.Job, error) {
 	ans := web.Job{
 		ID:     j.ID,
 		Name:   j.Name,
+		Type:   j.Type,
 		Status: j.Status,
 		Date:   time.Unix(j.CreatedAt, 0).UTC(),
 	}
@@ -152,6 +153,7 @@ func jobToRow(item *web.Job) (job, error) {
 	return job{
 		ID:        item.ID,
 		Name:      item.Name,
+		Type:      item.Type,
 		Status:    item.Status,
 		Data:      string(data),
 		CreatedAt: item.Date.Unix(),
@@ -162,6 +164,7 @@ func jobToRow(item *web.Job) (job, error) {
 type job struct {
 	ID        string
 	Name      string
+	Type      string
 	Status    string
 	Data      string
 	CreatedAt int64
@@ -218,12 +221,17 @@ func createJobsTable(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS jobs (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL,
+			type TEXT NOT NULL DEFAULT 'maps',
 			status TEXT NOT NULL,
 			data TEXT NOT NULL,
 			created_at INT NOT NULL,
 			updated_at INT NOT NULL
 		)
 	`)
+	if err == nil {
+		// Try to add column if it doesn't exist (primitive migration)
+		_, _ = db.Exec("ALTER TABLE jobs ADD COLUMN type TEXT NOT NULL DEFAULT 'maps'")
+	}
 	return err
 }
 

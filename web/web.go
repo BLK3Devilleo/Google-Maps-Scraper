@@ -52,6 +52,7 @@ func New(svc *Service, addr string) (*Server, error) {
 
 	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
 	mux.HandleFunc("/scrape", ans.scrape)
+	mux.HandleFunc("/web-scrape", ans.webScrape)
 	mux.HandleFunc("/download", func(w http.ResponseWriter, r *http.Request) {
 		r = requestWithID(r)
 
@@ -286,6 +287,7 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	newJob := Job{
 		ID:     uuid.New().String(),
 		Name:   r.Form.Get("name"),
+		Type:   JobTypeGmaps,
 		Date:   time.Now().UTC(),
 		Status: StatusPending,
 		Data:   JobData{},
@@ -388,6 +390,59 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		http.Error(w, "missing tpl", http.StatusInternalServerError)
 
+		return
+	}
+
+	_ = tmpl.Execute(w, newJob)
+}
+
+func (s *Server) webScrape(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	newJob := Job{
+		ID:     uuid.New().String(),
+		Name:   r.Form.Get("name"),
+		Type:   JobTypeWeb,
+		Date:   time.Now().UTC(),
+		Status: StatusPending,
+		Data: JobData{
+			MaxTime: time.Minute * 10, // Default for web jobs
+			Depth:   1,
+		},
+	}
+
+	urls := strings.Split(r.Form.Get("urls"), "\n")
+	for _, u := range urls {
+		u = strings.TrimSpace(u)
+		if u == "" {
+			continue
+		}
+		newJob.Data.Keywords = append(newJob.Data.Keywords, u)
+	}
+
+	if len(newJob.Data.Keywords) == 0 {
+		http.Error(w, "Debe introducir al menos una URL", http.StatusUnprocessableEntity)
+		return
+	}
+
+	err = s.svc.Create(r.Context(), &newJob)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, ok := s.tmpl["static/templates/job_row.html"]
+	if !ok {
+		http.Error(w, "missing tpl", http.StatusInternalServerError)
 		return
 	}
 

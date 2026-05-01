@@ -23,7 +23,7 @@
         </span>
     </td>
     <td class="actions-cell">
-        <button onclick="viewResults('{{.ID}}', '{{.Name}}')" class="btn-action view-button">🔍 Ver Leads</button>
+        <button onclick="viewResults('{{.ID}}', '{{.Name}}', '{{.Type}}')" class="btn-action view-button">🔍 Ver Resultados</button>
 
         {{ if eq .Status "working" }}
         <button hx-post="/stop?id={{.ID}}"
