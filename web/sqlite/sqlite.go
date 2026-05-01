@@ -63,8 +63,16 @@ func (repo *repo) Select(ctx context.Context, params web.SelectParams) ([]web.Jo
 
 	if params.Status != "" {
 		q += ` WHERE status = ?`
-
 		args = append(args, params.Status)
+	}
+
+	if params.Type != "" {
+		if params.Status != "" {
+			q += ` AND type = ?`
+		} else {
+			q += ` WHERE type = ?`
+		}
+		args = append(args, params.Type)
 	}
 
 	q += " ORDER BY created_at DESC"

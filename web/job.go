@@ -22,6 +22,7 @@ const (
 
 type SelectParams struct {
 	Status string
+	Type   string
 	Limit  int
 }
 

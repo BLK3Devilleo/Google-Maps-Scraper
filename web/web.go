@@ -533,7 +533,13 @@ func (s *Server) getJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jobs, err := s.svc.All(context.Background())
+	params := SelectParams{
+		Status: r.URL.Query().Get("status"),
+		Type:   r.URL.Query().Get("type"),
+		Limit:  100,
+	}
+
+	jobs, err := s.svc.All(context.Background(), params)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 

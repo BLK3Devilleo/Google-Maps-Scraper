@@ -86,6 +86,31 @@
             text-decoration: none;
             font-size: 13px;
         }
+
+        .dash-tab {
+            background: none;
+            border: none;
+            padding: 15px 5px;
+            color: var(--color-text-dim);
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .dash-tab.active {
+            color: var(--color-primary);
+        }
+
+        .dash-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--color-primary);
+        }
     </style>
     <style>
         :root {
@@ -286,15 +311,31 @@
                 </div>
             </div>
             <div class="content">
+                <div class="dashboard-tabs" style="display: flex; gap: 20px; border-bottom: 1px solid var(--color-border); margin-bottom: 25px; padding: 0 10px;">
+                    <button class="dash-tab active" onclick="switchDashTab('maps')" id="tab-maps">
+                        🗺️ Exploración Maps
+                    </button>
+                    <button class="dash-tab" onclick="switchDashTab('web')" id="tab-web">
+                        🔍 Inspección Web
+                    </button>
+                </div>
+
                 <div class="toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 10px;">
                     <div class="search-box" style="flex: 1; max-width: 300px;">
                         <input type="text" id="dashboard-filter" placeholder="Filtrar paquetes..." onkeyup="filterDashboard()" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border); padding: 10px 40px; border-radius: 12px; width: 100%;">
                     </div>
-                    <div style="color: var(--color-text-dim); font-size: 13px; font-weight: 600;">📦 Mis Paquetes de Datos</div>
                 </div>
+
                 <div id="spinner" class="spinner"></div>
-                <div class="dashboard-grid" id="job-grid" hx-get="/jobs" hx-trigger="load, every 10s">
-                    <!-- Los paquetes de datos se insertan aquí vía HTMX -->
+
+                <!-- Contenedor para Maps -->
+                <div id="grid-maps" class="dash-grid-container">
+                    <div class="dashboard-grid" id="job-grid-maps" hx-get="/jobs?type=maps" hx-trigger="load, every 10s"></div>
+                </div>
+
+                <!-- Contenedor para Webs -->
+                <div id="grid-web" class="dash-grid-container" style="display: none;">
+                    <div class="dashboard-grid" id="job-grid-web" hx-get="/jobs?type=web" hx-trigger="load, every 10s"></div>
                 </div>
             </div>
         </main>
@@ -399,6 +440,14 @@
         }
 
         setInterval(updateProgressBars, 1000);
+
+        function switchDashTab(type) {
+            document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + type).classList.add('active');
+            
+            document.getElementById('grid-maps').style.display = type === 'maps' ? 'block' : 'none';
+            document.getElementById('grid-web').style.display = type === 'web' ? 'block' : 'none';
+        }
 
         function viewResults(id, name, type) {
             document.getElementById('modal-title').innerText = `${type === 'web' ? 'Inspección' : 'Leads'}: ${name}`;

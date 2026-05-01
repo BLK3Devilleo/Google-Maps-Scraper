@@ -36,8 +36,8 @@ func (s *Service) Create(ctx context.Context, job *Job) error {
 	return s.repo.Create(ctx, job)
 }
 
-func (s *Service) All(ctx context.Context) ([]Job, error) {
-	return s.repo.Select(ctx, SelectParams{})
+func (s *Service) All(ctx context.Context, params SelectParams) ([]Job, error) {
+	return s.repo.Select(ctx, params)
 }
 
 func (s *Service) Get(ctx context.Context, id string) (Job, error) {
