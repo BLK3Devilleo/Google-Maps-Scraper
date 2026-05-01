@@ -21,6 +21,7 @@ type WebProfile struct {
 	Videos      []string          `json:"videos"`
 	Emails      []string          `json:"emails"`
 	Phones      []string          `json:"phones"`
+	Addresses   []string          `json:"addresses"`
 	Socials     map[string]string `json:"socials"`
 }
 
@@ -40,6 +41,7 @@ func (w *WebProfile) CsvRow() []string {
 		videos,
 		emails,
 		phones,
+		strings.Join(w.Addresses, " | "),
 		string(socials),
 	}
 }
@@ -54,6 +56,7 @@ func (w *WebProfile) CsvHeaders() []string {
 		"videos",
 		"emails",
 		"phones",
+		"addresses",
 		"socials",
 	}
 }
@@ -87,27 +90,28 @@ func (j *WebInspectorJob) Process(ctx context.Context, resp *scrapemate.Response
 		Socials:     docSocialExtractor(doc),
 		Emails:      docEmailExtractor(doc),
 		Phones:      docPhoneExtractor(doc),
+		Addresses:   docAddressExtractor(doc),
 	}
 
 	if profile.Description == "" {
 		profile.Description = strings.TrimSpace(doc.Find("meta[property='og:description']").AttrOr("content", ""))
 	}
 
-	// Extract Description/Summary
-	profile.Description = doc.Find("meta[name='description']").AttrOr("content", "")
-	if profile.Description == "" {
-		profile.Description = doc.Find("meta[property='og:description']").AttrOr("content", "")
-	}
-
-	// Try to get a summary from the first meaningful paragraph
-	doc.Find("p").EachWithBreak(func(_ int, s *goquery.Selection) bool {
+	// Extract Summary (The "About" or mission statement)
+	summaryFound := false
+	doc.Find("p, .about, .description, #description").EachWithBreak(func(_ int, s *goquery.Selection) bool {
 		text := strings.TrimSpace(s.Text())
-		if len(text) > 50 {
+		if len(text) > 60 && len(text) < 500 {
 			profile.Summary = text
+			summaryFound = true
 			return false
 		}
 		return true
 	})
+
+	if !summaryFound && profile.Description != "" {
+		profile.Summary = profile.Description
+	}
 
 	// Extract Images
 	baseURL, _ := url.Parse(j.URL)
@@ -162,4 +166,38 @@ func docPhoneExtractor(doc *goquery.Document) []string {
 		}
 	}
 	return phones
+}
+
+func docAddressExtractor(doc *goquery.Document) []string {
+	var addresses []string
+	body := doc.Find("body").Text()
+	
+	// Regex for Spanish/General address patterns (Calle, Avda, CP, etc)
+	re := regexp.MustCompile(`(?i)(?:Calle|C\/|Av\.|Avda\.|Paseo|Plaza|Ctra\.)\s+[A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s,]{5,50}\d+`)
+	matches := re.FindAllString(body, -1)
+	
+	// Also look for Zip Codes (CP)
+	reCP := regexp.MustCompile(`\b\d{5}\b`)
+	cpMatches := reCP.FindAllString(body, -1)
+
+	seen := make(map[string]bool)
+	for _, m := range matches {
+		m = strings.TrimSpace(m)
+		if !seen[m] {
+			addresses = append(addresses, m)
+			seen[m] = true
+		}
+	}
+	
+	// If we found CPs but no full addresses, add CPs
+	if len(addresses) == 0 {
+		for _, cp := range cpMatches {
+			if !seen[cp] {
+				addresses = append(addresses, "CP: "+cp)
+				seen[cp] = true
+			}
+		}
+	}
+
+	return addresses
 }
