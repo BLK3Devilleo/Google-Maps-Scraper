@@ -11,6 +11,58 @@
     <link rel="stylesheet" href="/static/css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.6/htmx.min.js"></script>
     <style>
+        :root {
+            --color-background: #0f172a;
+            --color-surface: #1e293b;
+            --color-surface-hover: #334155;
+            --color-text: #f1f5f9;
+            --color-text-dim: #94a3b8;
+            --color-border: #334155;
+            --color-primary: #f59e0b;
+            --color-primary-hover: #fbbf24;
+            --color-accent: #38bdf8;
+            --color-success: #10b981;
+            --color-error: #ef4444;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        body {
+            background-color: var(--color-background);
+            background-image: radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.05) 0px, transparent 50%);
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+        header { background: var(--glass-bg); backdrop-filter: blur(12px); padding: 20px 40px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        header h1 { margin: 0; font-size: 24px; background: linear-gradient(to right, var(--color-primary), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav a { color: var(--color-text); text-decoration: none; font-size: 14px; font-weight: 600; padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; transition: all 0.2s; }
+        nav a:hover { border-color: var(--color-primary); transform: translateY(-1px); }
+        main { display: flex; flex: 1; padding: 20px; gap: 20px; }
+        .content { flex: 1; background: var(--color-surface); border-radius: 16px; border: 1px solid var(--color-border); padding: 25px; }
+        .website-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .website-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--color-border);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        .website-item:hover {
+            border-color: var(--color-primary);
+            background: rgba(255, 255, 255, 0.08);
+        }
+    </style>
+    <style>
         .website-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

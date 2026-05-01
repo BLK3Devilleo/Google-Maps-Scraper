@@ -42,15 +42,13 @@ func New(svc *Service, addr string) (*Server, error) {
 		},
 	}
 
+	mux := http.NewServeMux()
+	
 	staticFS, err := fs.Sub(static, "static")
 	if err != nil {
 		return nil, err
 	}
-
-	fileServer := http.FileServer(http.FS(staticFS))
-	mux := http.NewServeMux()
-
-	mux.Handle("/static/", http.StripPrefix("/static/", fileServer))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 	mux.HandleFunc("/scrape", ans.scrape)
 	mux.HandleFunc("/web-scrape", ans.webScrape)
 	mux.HandleFunc("/download", func(w http.ResponseWriter, r *http.Request) {
