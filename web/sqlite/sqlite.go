@@ -25,7 +25,7 @@ func New(path string) (web.JobRepository, error) {
 }
 
 func (repo *repo) Get(ctx context.Context, id string) (web.Job, error) {
-	const q = `SELECT * from jobs WHERE id = ?`
+	const q = `SELECT id, name, type, status, data, created_at, updated_at FROM jobs WHERE id = ?`
 
 	row := repo.db.QueryRowContext(ctx, q, id)
 
@@ -57,7 +57,7 @@ func (repo *repo) Delete(ctx context.Context, id string) error {
 }
 
 func (repo *repo) Select(ctx context.Context, params web.SelectParams) ([]web.Job, error) {
-	q := `SELECT * from jobs`
+	q := `SELECT id, name, type, status, data, created_at, updated_at FROM jobs`
 
 	var args []any
 
