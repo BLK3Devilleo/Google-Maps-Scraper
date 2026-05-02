@@ -768,7 +768,7 @@ func (s *Server) apiScrape(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) apiGetJobs(w http.ResponseWriter, r *http.Request) {
-	jobs, err := s.svc.All(r.Context())
+	jobs, err := s.svc.All(r.Context(), SelectParams{})
 	if err != nil {
 		apiError := apiError{
 			Code:    http.StatusInternalServerError,
