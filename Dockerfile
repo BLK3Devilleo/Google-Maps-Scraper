@@ -15,7 +15,7 @@ RUN export PATH=$PATH:/usr/local/go/bin:/root/go/bin \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /opt/browsers \
     && PLAYWRIGHT_BROWSERS_PATH=/opt/browsers \
-       go run github.com/mxschmitt/playwright-go/cmd/playwright@${PLAYWRIGHT_GO_VERSION} install --with-deps
+    go run github.com/mxschmitt/playwright-go/cmd/playwright@${PLAYWRIGHT_GO_VERSION} install --with-deps
 
 # Build stage
 FROM golang:1.25.6-trixie AS builder
@@ -62,5 +62,7 @@ RUN chmod -R 755 /opt/browsers \
     && chmod -R 755 /opt/ms-playwright-go
 
 COPY --from=builder /usr/bin/google-maps-scraper /usr/bin/
+
+EXPOSE 8080
 
 ENTRYPOINT ["google-maps-scraper"]
