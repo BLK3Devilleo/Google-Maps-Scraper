@@ -13,9 +13,9 @@ RUN export PATH=$PATH:/usr/local/go/bin:/root/go/bin \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && go install github.com/mxschmitt/playwright-go/cmd/playwright@${PLAYWRIGHT_GO_VERSION} \
     && mkdir -p /opt/browsers \
-    && playwright install chromium --with-deps
+    && PLAYWRIGHT_BROWSERS_PATH=/opt/browsers \
+       go run github.com/mxschmitt/playwright-go/cmd/playwright@${PLAYWRIGHT_GO_VERSION} install --with-deps
 
 # Build stage
 FROM golang:1.25.6-trixie AS builder
